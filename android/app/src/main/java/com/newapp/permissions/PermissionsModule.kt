@@ -71,8 +71,6 @@ class PermissionsModule(private val reactContext: ReactApplicationContext) :
 
         val output: WritableMap = WritableNativeMap()
         for (permission in permissionLocation) {
-            Log.d("Permissions", "${reactContext.checkSelfPermission(permission)}")
-
             if (reactContext.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
                 checkedPermissionsDenied++
             }
@@ -121,14 +119,11 @@ class PermissionsModule(private val reactContext: ReactApplicationContext) :
                     for (j in permissionsToCheck.indices) {
                         val permission = permissionsToCheck[j]
                         if (results.isNotEmpty() && results[j] == PackageManager.PERMISSION_GRANTED) {
-                            //output.putString(permission, GRANTED)
                             checkedPermissionsGranted++
                         } else {
                             if (awareActivity.shouldShowRequestPermissionRationale(permission)) {
-                                // output.putString(permission, DENIED)
                                 checkedPermissionsDenied++
                             } else {
-                                // output.putString(permission, BLOCKED)
                                 checkedPermissionsBlocked++
                             }
                         }
