@@ -21,10 +21,7 @@ class GetLocation(private val locationManager: LocationManager) {
                 promise.reject("UNAVAILABLE", "Location not available")
                 return
             }
-            val enableHighAccuracy = true
-            val criteria = Criteria()
-            criteria.accuracy =
-                if (enableHighAccuracy) Criteria.ACCURACY_FINE else Criteria.ACCURACY_COARSE
+
             listenerGetLocation = LocationListener { location ->
                 val resultLocation = WritableNativeMap()
                 resultLocation.putString("provider", location.provider)
@@ -41,21 +38,25 @@ class GetLocation(private val locationManager: LocationManager) {
                 listenerGetLocation?.let { locationManager.removeUpdates(it) }
 
             }
+
+            var provider = LocationManager.GPS_PROVIDER
+
+            val isNetworkEnable =
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+
+            if (isNetworkEnable) {
+
+                provider = LocationManager.NETWORK_PROVIDER
+
+            }
+
             locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
+                provider,
                 0L,
                 0f,
                 listenerGetLocation!!
             )
-
-            /*locationManager.requestLocationUpdates(
-                0L,
-                0f,
-                criteria,
-                listenerGetLocation!!,
-                Looper.myLooper()
-            )*/
-
 
         } catch (ex: SecurityException) {
             ex.printStackTrace()
@@ -96,10 +97,7 @@ class GetLocation(private val locationManager: LocationManager) {
                 startTrackPromise?.reject("UNAVAILABLE", "Location not available")
                 return
             }
-            val enableHighAccuracy = true
-            val criteria = Criteria()
-            criteria.accuracy =
-                if (enableHighAccuracy) Criteria.ACCURACY_FINE else Criteria.ACCURACY_COARSE
+
             listenerStartTrack = LocationListener { location ->
                 val resultLocation = WritableNativeMap()
                 resultLocation.putString("provider", location.provider)
@@ -119,20 +117,25 @@ class GetLocation(private val locationManager: LocationManager) {
                 startTrackPromise?.resolve(resultLocation)
 
             }
+
+            var provider = LocationManager.GPS_PROVIDER
+
+            val isNetworkEnable =
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+
+
+            if (isNetworkEnable) {
+
+                provider = LocationManager.NETWORK_PROVIDER
+
+            }
+
             locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER,
+                provider,
                 minTimeMs,
                 minDistanceM,
                 listenerStartTrack!!
             )
-
-            /* locationManager.requestLocationUpdates(
-                 minTimeMs,
-                 minDistanceM,
-                 criteria,
-                 listenerStartTrack!!,
-                 Looper.myLooper()
-             )*/
 
         } catch (ex: SecurityException) {
             ex.printStackTrace()

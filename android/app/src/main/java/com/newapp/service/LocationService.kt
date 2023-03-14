@@ -8,6 +8,7 @@ import android.content.Intent
 import android.location.Location
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.*
 import org.greenrobot.eventbus.EventBus
@@ -18,12 +19,14 @@ class LocationService:Service() {
     private var locationCallback: LocationCallback? = null
     private var locationRequest: LocationRequest? = null
 
-    private var notificationManager: NotificationManager? = null
+    //private var notificationManager: NotificationManager? = null
 
     private var location: Location?=null
 
     override fun onCreate() {
         super.onCreate()
+
+        Log.d("Location_service","OnCreate")
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         locationRequest =
@@ -39,12 +42,12 @@ class LocationService:Service() {
                 onNewLocation(locationResult)
             }
         }
-        notificationManager = this.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        /*notificationManager = this.getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel =
                 NotificationChannel(CHANNEL_ID, "locations", NotificationManager.IMPORTANCE_HIGH)
             notificationManager?.createNotificationChannel(notificationChannel)
-        }
+        }*/
     }
 
     @Suppress("MissingPermission")
@@ -75,10 +78,15 @@ class LocationService:Service() {
             longitude = location?.longitude
         )
         )
-        startForeground(NOTIFICATION_ID,getNotification())
+
+        Log.d("onNewLocation","${location?.longitude}")
+        //startForeground(NOTIFICATION_ID,getNotification())
     }
 
     fun getNotification(): Notification {
+        Log.d("Location","${location?.longitude}")
+
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Location Updates")
             .setContentText(

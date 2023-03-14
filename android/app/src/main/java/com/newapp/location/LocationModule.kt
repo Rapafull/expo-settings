@@ -1,9 +1,11 @@
 package com.newapp.location
 
 import android.content.Context
+import android.content.Intent
 import android.location.LocationManager
 import android.util.SparseArray
 import com.facebook.react.bridge.*
+import com.newapp.service.LocationService
 import com.newapp.util.GetLocation
 
 
@@ -20,6 +22,8 @@ class LocationModule(reactContext: ReactApplicationContext) :
         try {
             locationManager =
                 reactContext.applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+            appContext.startService(Intent(appContext,LocationService::class.java))
         } catch (ex: Exception) {
             ex.printStackTrace()
         }
