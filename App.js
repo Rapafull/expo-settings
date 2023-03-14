@@ -2,18 +2,17 @@ import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { Button, NativeModules, StyleSheet, Text, View } from "react-native";
 
-
 export default function App() {
-  
   const [count, setCount] = React.useState(0);
   var [data, setLocation] = React.useState("0");
 
   const onPressLocation = async () => {
-    setLocation(data="0")
-   const result = await NativeModules.LocationModule.getLocation();
-   console.log();
-    setLocation(data=`Lat: ${result["latitude"]} Lon : ${result["longitude"]}`);
-    console.log(data);
+    setLocation((data = "0"));
+    const result = await NativeModules.LocationModule.getLocation();
+    console.log(result);
+    setLocation(
+      (data = `Lat: ${result["latitude"]} Lon : ${result["longitude"]}`)
+    );
   };
 
   const onPressStartLocation = async () => {
@@ -39,16 +38,24 @@ export default function App() {
     console.log(data);
   };
 
-  const changeColor=()=>{
-    setCount(count+1);
-  }
+  const openSettings = async () => {
+    data = await NativeModules.PermissionsModule.openSettings();
+    console.log(data);
+  };
+
+  const changeColor = () => {
+    setCount(count + 1);
+  };
   return (
     <View style={styles.container}>
-       <View style={styles.button}>
+      <View style={styles.button}>
         <Button title="check permissions" onPress={checkPermission} />
       </View>
-       <View style={styles.button}>
+      <View style={styles.button}>
         <Button title="Get permissions" onPress={getPermissions} />
+      </View>
+      <View style={styles.button}>
+        <Button title="Open settings" onPress={openSettings} />
       </View>
       <View style={styles.button}>
         <Button title="Get location" onPress={onPressLocation} />
@@ -76,6 +83,6 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: 20,
-    backgroundColor:"#000000"
+    backgroundColor: "#000000",
   },
 });

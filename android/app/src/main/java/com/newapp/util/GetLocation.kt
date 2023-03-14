@@ -3,7 +3,6 @@ package com.newapp.util
 import android.location.Criteria
 import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Looper
 import android.util.Log
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReadableMap
@@ -17,11 +16,7 @@ class GetLocation(private val locationManager: LocationManager) {
     private var startTrackPromise: Promise? = null
 
     fun getLocation(promise: Promise) {
-        Log.d("Get Location", "function")
         try {
-
-
-
             if (!isLocationEnabled) {
                 promise.reject("UNAVAILABLE", "Location not available")
                 return
@@ -41,14 +36,17 @@ class GetLocation(private val locationManager: LocationManager) {
                 resultLocation.putDouble("bearing", location.bearing.toDouble())
                 resultLocation.putDouble("time", location.time.toDouble())
 
-                Log.d("getLocation", "Lat : ${location.latitude} Lon : ${location.longitude}")
-
                 promise.resolve(resultLocation)
 
                 listenerGetLocation?.let { locationManager.removeUpdates(it) }
 
             }
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0L,0f,listenerGetLocation!!)
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                0L,
+                0f,
+                listenerGetLocation!!
+            )
 
             /*locationManager.requestLocationUpdates(
                 0L,
@@ -71,26 +69,26 @@ class GetLocation(private val locationManager: LocationManager) {
     }
 
     fun startLocationTracker(options: ReadableMap?, promise: Promise) {
-        val hasKeyMinTimeMs= options?.hasKey("minTimeMs")?:false
-        val hasKeyMinDistanceMs= options?.hasKey("minDistanceM")?:false
+        val hasKeyMinTimeMs = options?.hasKey("minTimeMs") ?: false
+        val hasKeyMinDistanceMs = options?.hasKey("minDistanceM") ?: false
 
-        val minTimeMsLong=options?.getDouble("minTimeMs")?.toLong()?:(1000 * 60 * 1).toLong()
-        val minDistanceMFloat=options?.getDouble("minDistanceM")?.toFloat()?:(5).toFloat()
+        val minTimeMsLong = options?.getDouble("minTimeMs")?.toLong() ?: (1000 * 60 * 1).toLong()
+        val minDistanceMFloat = options?.getDouble("minDistanceM")?.toFloat() ?: (5).toFloat()
 
-        val minTimeMs = if(hasKeyMinTimeMs){
+        val minTimeMs = if (hasKeyMinTimeMs) {
             minTimeMsLong
-        }else{
+        } else {
             (1000 * 60 * 1).toLong()
         }
 
-        val minDistanceM = if(hasKeyMinDistanceMs){
+        val minDistanceM = if (hasKeyMinDistanceMs) {
             minDistanceMFloat
-        }else{
+        } else {
             (5).toFloat()
         }
 
-        Log.d("minTimeMs","$minTimeMs")
-        Log.d("minDistanceM","$minDistanceM")
+        Log.d("minTimeMs", "$minTimeMs")
+        Log.d("minDistanceM", "$minDistanceM")
 
         this.startTrackPromise = promise
         try {
@@ -113,20 +111,28 @@ class GetLocation(private val locationManager: LocationManager) {
                 resultLocation.putDouble("bearing", location.bearing.toDouble())
                 resultLocation.putDouble("time", location.time.toDouble())
 
-                Log.d("startLocationTracker", "Lat : ${location.latitude} Lon : ${location.longitude}")
+                Log.d(
+                    "startLocationTracker",
+                    "Lat : ${location.latitude} Lon : ${location.longitude}"
+                )
 
                 startTrackPromise?.resolve(resultLocation)
 
             }
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,minTimeMs,minDistanceM,listenerStartTrack!!)
-
-           /* locationManager.requestLocationUpdates(
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
                 minTimeMs,
                 minDistanceM,
-                criteria,
-                listenerStartTrack!!,
-                Looper.myLooper()
-            )*/
+                listenerStartTrack!!
+            )
+
+            /* locationManager.requestLocationUpdates(
+                 minTimeMs,
+                 minDistanceM,
+                 criteria,
+                 listenerStartTrack!!,
+                 Looper.myLooper()
+             )*/
 
         } catch (ex: SecurityException) {
             ex.printStackTrace()
@@ -152,12 +158,12 @@ class GetLocation(private val locationManager: LocationManager) {
         }
     }
 
-     fun stop() {
+    fun stop() {
         if (listenerStartTrack != null) {
             locationManager.removeUpdates(listenerStartTrack!!)
         }
 
-         startTrackPromise = null
+        startTrackPromise = null
         listenerStartTrack = null
     }
 

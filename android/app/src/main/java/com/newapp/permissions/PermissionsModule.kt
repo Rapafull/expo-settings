@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import android.util.SparseArray
 import androidx.core.app.NotificationManagerCompat
 import com.facebook.react.bridge.*
@@ -12,7 +13,7 @@ import com.facebook.react.modules.core.PermissionAwareActivity
 import com.facebook.react.modules.core.PermissionListener
 
 
-class PermissionsModule(reactContext: ReactApplicationContext?) :
+class PermissionsModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext), PermissionListener {
     private val mCallbacks: SparseArray<Callback> = SparseArray()
     private var mRequestCode = 0
@@ -52,7 +53,6 @@ class PermissionsModule(reactContext: ReactApplicationContext?) :
     @ReactMethod
     fun openSettings(promise: Promise) {
         try {
-            val reactContext = reactApplicationContext
             val intent = Intent()
             val packageName = reactContext.packageName
             intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
@@ -67,15 +67,25 @@ class PermissionsModule(reactContext: ReactApplicationContext?) :
 
     @ReactMethod
     fun checkPermissions(promise: Promise) {
+        var checkedPermissionsDenied = 0
 
         val output: WritableMap = WritableNativeMap()
-        val context = reactApplicationContext.baseContext
         for (permission in permissionLocation) {
-            if (context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
-                output.putString(permission, GRANTED)
-            } else {
-                output.putString(permission, DENIED)
+            Log.d("Permissions", "${reactContext.checkSelfPermission(permission)}")
+
+            if (reactContext.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
+                checkedPermissionsDenied++
             }
+        }
+
+        if (checkedPermissionsDenied >= 1) {
+            output.putBoolean(GRANTED, false)
+            output.putBoolean(CAN_ASK_AGAIN, true)
+
+        } else {
+            output.putBoolean(GRANTED, true)
+            output.putBoolean(CAN_ASK_AGAIN, true)
+
         }
         promise.resolve(output)
     }
@@ -84,17 +94,20 @@ class PermissionsModule(reactContext: ReactApplicationContext?) :
     fun requestPermissions(promise: Promise) {
         val output: WritableMap = WritableNativeMap()
         val permissionsToCheck = ArrayList<String>()
-        var checkedPermissionsCount = 0
-        val context = reactApplicationContext.baseContext
+        var checkedPermissionsGranted = 0
+        var checkedPermissionsDenied = 0
+        var checkedPermissionsBlocked = 0
+
         for (permission in permissionLocation) {
-            if (context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
-                output.putString(permission, GRANTED)
-                checkedPermissionsCount++
+            if (reactContext.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED) {
+                checkedPermissionsGranted++
             } else {
                 permissionsToCheck.add(permission)
             }
         }
-        if (permissionLocation.size == checkedPermissionsCount) {
+        if (permissionLocation.size == checkedPermissionsGranted) {
+            output.putBoolean(GRANTED, true)
+            output.putBoolean(CAN_ASK_AGAIN, true)
             promise.resolve(output)
             return
         }
@@ -108,15 +121,32 @@ class PermissionsModule(reactContext: ReactApplicationContext?) :
                     for (j in permissionsToCheck.indices) {
                         val permission = permissionsToCheck[j]
                         if (results.isNotEmpty() && results[j] == PackageManager.PERMISSION_GRANTED) {
-                            output.putString(permission, GRANTED)
+                            //output.putString(permission, GRANTED)
+                            checkedPermissionsGranted++
                         } else {
                             if (awareActivity.shouldShowRequestPermissionRationale(permission)) {
-                                output.putString(permission, DENIED)
+                                // output.putString(permission, DENIED)
+                                checkedPermissionsDenied++
                             } else {
-                                output.putString(permission, BLOCKED)
+                                // output.putString(permission, BLOCKED)
+                                checkedPermissionsBlocked++
                             }
                         }
                     }
+                    if (checkedPermissionsBlocked >= 1) {
+                        output.putBoolean(GRANTED, false)
+                        output.putBoolean(CAN_ASK_AGAIN, false)
+
+                    } else if (checkedPermissionsDenied >= 1) {
+                        output.putBoolean(GRANTED, false)
+                        output.putBoolean(CAN_ASK_AGAIN, true)
+
+                    } else {
+                        output.putBoolean(GRANTED, true)
+                        output.putBoolean(CAN_ASK_AGAIN, true)
+
+                    }
+
                     promise.resolve(output)
                 })
             activity.requestPermissions(permissionsToCheck.toTypedArray(), mRequestCode, this)
@@ -159,5 +189,6 @@ class PermissionsModule(reactContext: ReactApplicationContext?) :
         const val DENIED = "denied"
         const val UNAVAILABLE = "unavailable"
         const val BLOCKED = "blocked"
+        const val CAN_ASK_AGAIN = "canAskAgain"
     }
 }
